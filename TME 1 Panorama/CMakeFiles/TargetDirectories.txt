@@ -1,0 +1,3 @@
+/home/raysamram/Downloads/Panorama_Initial/CMakeFiles/rebuild_cache.dir
+/home/raysamram/Downloads/Panorama_Initial/CMakeFiles/edit_cache.dir
+/home/raysamram/Downloads/Panorama_Initial/CMakeFiles/Panorama.dir
