@@ -15,7 +15,7 @@ using namespace std;
 void getClicks(Window w1, Window w2, vector<IntPoint2>& pts1, vector<IntPoint2>& pts2) 
 {
 
-    // SELECT EPOINT ON IMAGE 1
+    
     IntPoint2 p;
     Window win;
     int index, button;
@@ -23,6 +23,8 @@ void getClicks(Window w1, Window w2, vector<IntPoint2>& pts1, vector<IntPoint2>&
     int count = 0;
     while(true)
     {
+    // SELECT EPOINT ON IMAGE 1
+    cout<<"Number of selected points : "<<count<<". Right click to process them."<<endl;
     cout<<"Getting new pair of points"<<endl;
     cout<<"Getting point from Image 1"<<endl;
     setActiveWindow(w1);
@@ -100,15 +102,21 @@ Matrix<float> getHomography(const vector<IntPoint2>& pts1, const vector<IntPoint
     cout<<A<<endl;
     cout<<" B Matrix : "<<endl;
     cout<<B<<endl;
-    B = linSolve(A, B);
+    
+    Vector<double> C(2*n);
+    C = linSolve(A, B);
+    
     cout<<" Result : "<<endl;
-    cout<<B<<endl;
+    cout<<C<<endl;
+    
     Matrix<float> H(3, 3);
-    H(0,0)=B[0]; H(0,1)=B[1]; H(0,2)=B[2];
-    H(1,0)=B[3]; H(1,1)=B[4]; H(1,2)=B[5];
-    H(2,0)=B[6]; H(2,1)=B[7]; H(2,2)=1;
+    H(0,0)=C[0]; H(0,1)=C[1]; H(0,2)=C[2];
+    H(1,0)=C[3]; H(1,1)=C[4]; H(1,2)=C[5];
+    H(2,0)=C[6]; H(2,1)=C[7]; H(2,2)=1;
+    
 
     // Sanity check
+    cout<<"Sanity Check :"<<endl;
     for(size_t i=0; i<n; i++) {
         float v1[]={(float)pts1[i].x(), (float)pts1[i].y(), 1.0f};
         float v2[]={(float)pts2[i].x(), (float)pts2[i].y(), 1.0f};
@@ -155,18 +163,19 @@ void panorama(const Image<Color,2>& I1, const Image<Color,2>& I2, Matrix<float> 
 
     cout << "x0 x1 y0 y1=" << x0 << ' ' << x1 << ' ' << y0 << ' ' << y1<<endl;
 
-
-    
-
-    Image<Color> I(int(x1-x0), int(y1-y0));
+    int padding = 600;
+    Image<Color> I(int(x1-x0)+padding , int(y1-y0)+padding);
     setActiveWindow( openWindow(I.width(), I.height()) );
     I.fill(WHITE);
-    // ------------- TODO/A completer ----------
-    for(int i=0; i<I1.width(); i++)
+
+    Vector<float> sr(3), sr_res(3);
+    
+    
+    for(int i=0; i<I2.width(); i++)
     {
-        for(int j=0; j<I1.height(); j++)
+        for(int j=0; j<I2.height(); j++)
         {
-            I(i, j) = I1(i, j);
+            I(i+padding , j+padding ) = I2(i, j);
         }
     }
 
@@ -174,17 +183,20 @@ void panorama(const Image<Color,2>& I1, const Image<Color,2>& I2, Matrix<float> 
     {
         for(int j=0; j<I1.height(); j++)
         {
-            Vector<float> sr(3);
-            sr[0] = i ; sr[1] = j ; sr[2] = 1;
-            Vector<float> sr_res(3);
-            //cout<<"H : "<<H<<endl;
-            cout<<"ORIGINAL  : "<<sr<<endl;
+
+            sr[0] = -i ; sr[1] = -j ; sr[2] = -1;
+            
             sr_res = H*sr;
-            cout<<"TO -> "<<sr_res<<endl;
-            
-            
-            I((float)round(sr_res[0]), (float)round(sr_res[1])) = I1(i, j);
-            
+            //cout<<"ORIGINAL POINT : "<<sr<<endl;
+            //cout<<"TRANSLATED TO -> "<<sr_res<<endl;
+            if(I((float)round(sr_res[0])+padding , (float)round(sr_res[1])+padding )!=0)
+            {
+                I((float)round(sr_res[0])+padding , (float)round(sr_res[1])+padding ) = I1(i, j);
+            }
+            else
+            {
+                I((float)round(sr_res[0])+padding , (float)round(sr_res[1])+padding) = (I1(i, j)+I((float)round(sr_res[0])+padding , (float)round(sr_res[1])+padding))/2;
+            }
         }
     }
 
