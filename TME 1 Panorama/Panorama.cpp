@@ -15,49 +15,50 @@ using namespace std;
 void getClicks(Window w1, Window w2, vector<IntPoint2>& pts1, vector<IntPoint2>& pts2) 
 {
 
-    // POINTS on Image 1
-    cout<<"Getting points from Image 1"<<endl;
-    for(int i=0; i<4; i++)
+    // SELECT EPOINT ON IMAGE 1
+    IntPoint2 p;
+    Window win;
+    int index, button;
+    int x, y;
+    int count = 0;
+    while(true)
     {
+    cout<<"Getting new pair of points"<<endl;
+    cout<<"Getting point from Image 1"<<endl;
     setActiveWindow(w1);
-    Window win;
-    int index, button;
-    int x, y;
-    while(win!=w1)
+    
+    while(win!=w1 or button!=1)
     {
         button = anyClick(win, index);
+        if(button!=1 and count>=4)
+        {
+            return;
+        }
     }
     
     getMouse(x, y);
     drawPoint(x, y, RED);
-    IntPoint2 p = IntPoint2(x, y);
+    p = IntPoint2(x, y);
     pts1.push_back(p);
-    /*
-    cout<<"Clicked"<<endl;
-    cout<<"Type of click : "<<button<<endl;
-    cout<<"win : "<<win<<endl;
-    cout<<"index : "<<index<<endl;
-    cout<<" X : "<<x<<endl;
-    cout<<" Y : "<<y<<endl;
-    */
-    }
     
-    // POINTS on Image 2
-    cout<<"Getting points from Image 2"<<endl;
-    for(int i=0; i<4; i++)
-    {
+    // SELECT EQUIVALENT POINT ON IMAGE 2
+    cout<<"Getting equivalent point from Image 2"<<endl;
     setActiveWindow(w2);
-    Window win;
-    int index, button;
-    int x, y;
-    while(win!=w2)
+    while(win!=w2 or button!=1)
     {
         button = anyClick(win, index);
+        if(button!=1 and count>=4)
+        {
+            return;
+        }
     }
     getMouse(x, y);
     drawPoint(x, y, RED);
-    IntPoint2 p = IntPoint2(x, y);
+    p = IntPoint2(x, y);
     pts2.push_back(p);
+    
+    count++;
+    
     /*
     cout<<"Clicked"<<endl;
     cout<<"Type of click : "<<button<<endl;
@@ -66,8 +67,10 @@ void getClicks(Window w1, Window w2, vector<IntPoint2>& pts1, vector<IntPoint2>&
     cout<<" X : "<<x<<endl;
     cout<<" Y : "<<y<<endl;
     */
+    
     }
-    // ------------- TODO/A completer ----------
+    
+  
 }
 
 // Return homography compatible with point matches
@@ -90,12 +93,16 @@ Matrix<float> getHomography(const vector<IntPoint2>& pts1, const vector<IntPoint
     }
     for(int i=0; i<n; i++)
     {
-    B[2*i] = -1*(float)pts1[2].x();
-    B[2*i+1] = -1*(float)pts1[2].y();
+    B[2*i] = -1*(float)pts2[i].x();
+    B[2*i+1] = -1*(float)pts2[i].y();
     }
-    cout<<" Final A Matrix : "<<endl;
+    cout<<" A Matrix : "<<endl;
     cout<<A<<endl;
+    cout<<" B Matrix : "<<endl;
+    cout<<B<<endl;
     B = linSolve(A, B);
+    cout<<" Result : "<<endl;
+    cout<<B<<endl;
     Matrix<float> H(3, 3);
     H(0,0)=B[0]; H(0,1)=B[1]; H(0,2)=B[2];
     H(1,0)=B[3]; H(1,1)=B[4]; H(1,2)=B[5];
@@ -163,19 +170,20 @@ void panorama(const Image<Color,2>& I1, const Image<Color,2>& I2, Matrix<float> 
         }
     }
 
-    for(int i=0; i<I2.width(); i++)
+    for(int i=0; i<I1.width(); i++)
     {
-        for(int j=0; j<I2.height(); j++)
+        for(int j=0; j<I1.height(); j++)
         {
             Vector<float> sr(3);
             sr[0] = i ; sr[1] = j ; sr[2] = 1;
             Vector<float> sr_res(3);
             //cout<<"H : "<<H<<endl;
             cout<<"ORIGINAL  : "<<sr<<endl;
-            cout<<"TO -> "<<sr_res<<endl;
             sr_res = H*sr;
+            cout<<"TO -> "<<sr_res<<endl;
             
-            I((float)sr_res[0], (float)sr_res[1]) = I1(i, j);
+            
+            I((float)round(sr_res[0]), (float)round(sr_res[1])) = I1(i, j);
             
         }
     }

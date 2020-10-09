@@ -1,4 +1,4 @@
-# Install script for directory: /home/raysamram/Downloads/Panorama_Initial
+# Install script for directory: /home/ray/Documents/Sorbonne Universite/VISION/TME 1 Panorama
 
 # Set the install prefix
 if(NOT DEFINED CMAKE_INSTALL_PREFIX)
@@ -45,5 +45,5 @@ endif()
 
 string(REPLACE ";" "\n" CMAKE_INSTALL_MANIFEST_CONTENT
        "${CMAKE_INSTALL_MANIFEST_FILES}")
-file(WRITE "/home/raysamram/Downloads/Panorama_Initial/${CMAKE_INSTALL_MANIFEST}"
+file(WRITE "/home/ray/Documents/Sorbonne Universite/VISION/TME 1 Panorama/${CMAKE_INSTALL_MANIFEST}"
      "${CMAKE_INSTALL_MANIFEST_CONTENT}")
