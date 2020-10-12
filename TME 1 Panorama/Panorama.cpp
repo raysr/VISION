@@ -95,8 +95,8 @@ Matrix<float> getHomography(const vector<IntPoint2>& pts1, const vector<IntPoint
     }
     for(int i=0; i<n; i++)
     {
-    B[2*i] = -1*(float)pts2[i].x();
-    B[2*i+1] = -1*(float)pts2[i].y();
+    B[2*i] = (float)pts2[i].x();
+    B[2*i+1] = (float)pts2[i].y();
     }
     cout<<" A Matrix : "<<endl;
     cout<<A<<endl;
@@ -184,7 +184,7 @@ void panorama(const Image<Color,2>& I1, const Image<Color,2>& I2, Matrix<float> 
         for(int j=0; j<I1.height(); j++)
         {
 
-            sr[0] = -i ; sr[1] = -j ; sr[2] = -1;
+            sr[0] = i ; sr[1] = j ; sr[2] = 1;
             
             sr_res = H*sr;
             //cout<<"ORIGINAL POINT : "<<sr<<endl;
