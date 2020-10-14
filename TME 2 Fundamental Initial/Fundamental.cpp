@@ -61,6 +61,13 @@ FMatrix<float,3,3> computeF(vector<Match>& matches) {
     // SVD
     cout<<"MATCHES :"<<endl;
     //int size = matches.size();
+
+    FMatrix<float 3, 3> N; // NORMALIZATION MATRIX
+    N(0, 0) = 0.001; N(0, 1) = 0; N(0, 2) = 0;
+    N(1, 0) = 0; N(1, 1) = 0.001; N(1, 2) = 0; 
+    N(2, 0) = 0; N(2, 1) = 0; N(2, 2) = 1;
+
+
     int size = 8;
     FMatrix<float, 8, 9> A;
     for(int i=0; i<size; i++)
@@ -89,23 +96,66 @@ FMatrix<float,3,3> computeF(vector<Match>& matches) {
     cout<<"Matrix A :"<<endl;
     cout<<A<<endl;
 
-    // A = U * S * V^T = U * Df * V^T
+    // A = U * D * V
     FMatrix<float, 8, 8> U;
-    FVector<float, 8> S;
+    FVector<float, 8> D;
     FMatrix<float, 9, 9> Vt;
-    
-    svd(A, U, S, Vt) ;  
-    cout<<"U :"<<endl;
+    svd(A, U, D, Vt) ;  
+    cout<<"U ="<<endl;
     cout<<U;
     cout<<endl;
-    cout<<"Df :"<<endl;
-    cout<<S;
+    cout<<"D ="<<endl;
+    cout<<D;
     cout<<endl;
-    cout<<"V^T :"<<endl;
+    cout<<"V^T ="<<endl;
     cout<<Vt;
     cout<<endl;
 
+    FVector<float, 9> f = Vt.getRow(8);
+    cout<<"f = V(8,:) ="<<endl;
+    cout<<f<<endl;
 
+
+
+    // reshaping f into F 
+    FMatrix<float, 3, 3> F;
+    F(0, 0) = f[0]; F(0, 1) = f[1]; F(0, 2) = f[2];
+    F(1, 0) = f[3]; F(1, 1) = f[4]; F(1, 2) = f[5];
+    F(2, 0) = f[6]; F(2, 1) = f[7]; F(2, 2) = f[8]; 
+
+
+    cout<<"RESULTING F :"<<endl;
+    cout<<F<<endl;
+
+    //  Reducing Rank to 2 by setting lowest value of Df to 0
+    FMatrix<float, 3, 3> Uf;
+    FVector<float, 3> Df;
+    FMatrix<float, 3, 3> Vft;
+    svd(F, Uf, Df, Vft) ;  
+    cout<<"Uf ="<<endl;
+    cout<<Uf;
+    cout<<endl;
+    cout<<"Df ="<<endl;
+    cout<<Df;
+    cout<<endl;
+    cout<<"Vf^T ="<<endl;
+    cout<<Vft;
+    cout<<endl;
+
+    float min = 9999;
+    int argmin = -1;
+    for(int i=0; i<8; i++)
+    {
+        if(Df[i]<min)
+        {
+            min = Df[i];
+            argmin = i;
+        }
+    }
+    Df[argmin] = 0;
+    FMatrix<float> tmp = Uf*Df;
+    F = tmp*Vt;
+    cout<<"Passed 2."<<endl;
     // Updating matches with inliers only
     vector<Match> all=matches;
     matches.clear();
