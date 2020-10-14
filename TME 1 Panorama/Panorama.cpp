@@ -60,15 +60,7 @@ void getClicks(Window w1, Window w2, vector<IntPoint2>& pts1, vector<IntPoint2>&
     pts2.push_back(p);
     
     count++;
-    
-    /*
-    cout<<"Clicked"<<endl;
-    cout<<"Type of click : "<<button<<endl;
-    cout<<"win : "<<win<<endl;
-    cout<<"index : "<<index<<endl;
-    cout<<" X : "<<x<<endl;
-    cout<<" Y : "<<y<<endl;
-    */
+
     
     }
     
@@ -163,6 +155,8 @@ void panorama(const Image<Color,2>& I1, const Image<Color,2>& I2, Matrix<float> 
 
     cout << "x0 x1 y0 y1=" << x0 << ' ' << x1 << ' ' << y0 << ' ' << y1<<endl;
 
+    
+    
     int padding = 600;
     Image<Color> I(int(x1-x0)+padding , int(y1-y0)+padding);
     setActiveWindow( openWindow(I.width(), I.height()) );
@@ -171,6 +165,9 @@ void panorama(const Image<Color,2>& I1, const Image<Color,2>& I2, Matrix<float> 
     Vector<float> sr(3), sr_res(3);
     
     
+
+
+
     for(int i=0; i<I2.width(); i++)
     {
         for(int j=0; j<I2.height(); j++)
@@ -185,10 +182,7 @@ void panorama(const Image<Color,2>& I1, const Image<Color,2>& I2, Matrix<float> 
         {
 
             sr[0] = i ; sr[1] = j ; sr[2] = 1;
-            
             sr_res = H*sr;
-            //cout<<"ORIGINAL POINT : "<<sr<<endl;
-            //cout<<"TRANSLATED TO -> "<<sr_res<<endl;
             if(I((float)round(sr_res[0])+padding , (float)round(sr_res[1])+padding )!=0)
             {
                 I((float)round(sr_res[0])+padding , (float)round(sr_res[1])+padding ) = I1(i, j);
