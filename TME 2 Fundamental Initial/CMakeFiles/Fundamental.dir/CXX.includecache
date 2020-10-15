@@ -19,6 +19,12 @@ cstdlib
 -
 ctime
 -
+cmath
+-
+stdlib.h
+-
+algorithm
+-
 
 /home/ray/Documents/Sorbonne Universite/VISION/TME 2 Fundamental Initial/Imagine/Features.h
 string

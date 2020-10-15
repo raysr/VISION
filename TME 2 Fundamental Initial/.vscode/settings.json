@@ -3,6 +3,12 @@
         "array": "cpp",
         "string_view": "cpp",
         "initializer_list": "cpp",
-        "utility": "cpp"
+        "utility": "cpp",
+        "vector": "cpp",
+        "iterator": "cpp",
+        "cmath": "cpp",
+        "random": "cpp",
+        "*.tcc": "cpp",
+        "string": "cpp"
     }
 }

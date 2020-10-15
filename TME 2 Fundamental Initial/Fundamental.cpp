@@ -9,6 +9,10 @@
 #include <vector>
 #include <cstdlib>
 #include <ctime>
+#include<cmath>
+#include <stdlib.h> 
+#include <algorithm>
+
 using namespace Imagine;
 using namespace std;
 
@@ -52,9 +56,14 @@ void algoSIFT(Image<Color,2> I1, Image<Color,2> I2,
 // Parameter matches is filtered to keep only inliers as output.
 FMatrix<float,3,3> computeF(vector<Match>& matches) {
     const float distMax = 1.5f; // Pixel error for inlier/outlier discrimination
-    int Niter=100000; // Adjusted dynamically
+    // Adjusted dynamically
     FMatrix<float,3,3> bestF;
-    vector<int> bestInliers;
+    cout.precision(2000);
+    
+    
+    float beta = 0.01;
+    
+    
     // --------------- TODO ------------
     // DO NOT FORGET NORMALIZATION OF POINTS
 
@@ -65,56 +74,64 @@ FMatrix<float,3,3> computeF(vector<Match>& matches) {
     N(0, 0) = 0.001; N(0, 1) = 0; N(0, 2) = 0;
     N(1, 0) = 0; N(1, 1) = 0.001; N(1, 2) = 0; 
     N(2, 0) = 0; N(2, 1) = 0; N(2, 2) = 1;
-    
+    srand (time(NULL));
+    int best_performance = 0;
+    vector<int> bestInliers;
+    float niter = 1000;
+
+    for(int lrm=0; lrm<niter; lrm++) // RANSAC LOOP
+    {
+        
+        cout<<"("<<lrm<<"/"<<niter<<")"<<endl;
+
+
+    // cout<<"T1"<<endl;
     int size = 8;
     FMatrix<float, 8, 9> A;
     FVector<float, 3> v1, v2;
+    vector<Match> matchestmp(8);
+    int randnu;
     for(int i=0; i<size; i++)
     {
-        v1[0] = matches.at(i).x1; v1[1] = matches.at(i).y1 ; v1[2] = 1;
-        v2[0] = matches.at(i).x2; v2[1] = matches.at(i).y2 ; v2[2] = 1;
+        randnu =  rand() % matches.size() + 0;
+        v1[0] = matches.at(randnu).x1; v1[1] = matches.at(randnu).y1 ; v1[2] = 1;
+        v2[0] = matches.at(randnu).x2; v2[1] = matches.at(randnu).y2 ; v2[2] = 1;
         v1 = N*v1;
         v2 = N*v2;
 
-        matches.at(i).x1 = v1[0];
-        matches.at(i).y1 = v1[1];
-        matches.at(i).x2 = v2[0];
-        matches.at(i).y2 = v2[1];
+        matchestmp[i].x1 = v1[0];
+        matchestmp[i].y1 = v1[1];
+        matchestmp[i].x2 = v2[0];
+        matchestmp[i].y2 = v2[1];
+        // cout<<"before : "<<matches.at(i).x1<<","<<matches.at(i).y1<<", "<<matches.at(i).x2<<", "<<matches.at(i).y2<<endl;
+        // cout<<"after : "<<matchestmp[i]<<endl;
     }
 
 
-
+     //cout<<"T2"<<endl;
     for(int i=0; i<size; i++)
     {
-        cout<<"0"<<endl;
-        A(i, 0) = matches.at(i).x2*matches.at(i).x1;
-        cout<<"1"<<endl;
-        A(i, 1) = matches.at(i).x2*matches.at(i).y1;
-        cout<<"2"<<endl;
-        A(i, 2) = matches.at(i).x2;
-        cout<<"3"<<endl;
-        A(i, 3) = matches.at(i).y2*matches.at(i).x1;
-        cout<<"4"<<endl;
-        A(i, 4) = matches.at(i).y2*matches.at(i).y1;
-        cout<<"5"<<endl;
-        A(i, 5) = matches.at(i).y2;
-        cout<<"6"<<endl;
-        A(i, 6) = matches.at(i).x1;
-        cout<<"7"<<endl;
-        A(i, 7) = matches.at(i).y1;
-        cout<<"8"<<endl;
+        A(i, 0) = matchestmp[i].x2*matchestmp[i].x1;
+        A(i, 1) = matchestmp[i].x2*matchestmp[i].y1;
+        A(i, 2) = matchestmp[i].x2;
+        A(i, 3) = matchestmp[i].y2*matchestmp[i].x1;
+        A(i, 4) = matchestmp[i].y2*matchestmp[i].y1;
+        A(i, 5) = matchestmp[i].y2;
+        A(i, 6) = matchestmp[i].x1;
+        A(i, 7) = matchestmp[i].y1;
         A(i, 8) = 1;
 
     }
 
-    cout<<"Matrix A :"<<endl;
-    cout<<A<<endl;
+    // cout<<"Matrix A :"<<endl;
+    // cout<<A<<endl;
 
     // A = U * D * V
     FMatrix<float, 8, 8> U;
     FVector<float, 8> D;
     FMatrix<float, 9, 9> Vt;
     svd(A, U, D, Vt) ;  
+    /*
     cout<<"U ="<<endl;
     cout<<U;
     cout<<endl;
@@ -124,37 +141,43 @@ FMatrix<float,3,3> computeF(vector<Match>& matches) {
     cout<<"V^T ="<<endl;
     cout<<Vt;
     cout<<endl;
+    */
 
     FVector<float, 9> f = Vt.getRow(8);
-    cout<<"f = V(8,:) ="<<endl;
-    cout<<f<<endl;
-
+    
+    /*
+     cout<<"f = V(8,:) ="<<endl;
+     cout<<f<<endl;
+    */
 
 
     // reshaping f into F 
+    // cout<<"T3"<<endl;
     FMatrix<float, 3, 3> F;
     F(0, 0) = f[0]; F(0, 1) = f[1]; F(0, 2) = f[2];
     F(1, 0) = f[3]; F(1, 1) = f[4]; F(1, 2) = f[5];
     F(2, 0) = f[6]; F(2, 1) = f[7]; F(2, 2) = f[8]; 
 
 
-    cout<<"RESULTING F :"<<endl;
-    cout<<F<<endl;
+   // cout<<"RESULTING F :"<<endl;
+   // cout<<F<<endl;
 
     //  Reducing Rank to 2 by setting lowest value of Df to 0
     FMatrix<float, 3, 3> Uf;
     FVector<float, 3> Df;
     FMatrix<float, 3, 3> Vft;
     svd(F, Uf, Df, Vft) ;  
-    cout<<"Uf ="<<endl;
-    cout<<Uf;
-    cout<<endl;
-    cout<<"Df ="<<endl;
-    cout<<Df;
-    cout<<endl;
-    cout<<"Vf^T ="<<endl;
-    cout<<Vft;
-    cout<<endl;
+     /*
+     cout<<"Uf ="<<endl;
+     cout<<Uf;
+     cout<<endl;
+     cout<<"Df ="<<endl;
+     cout<<Df;
+     cout<<endl;
+     cout<<"Vf^T ="<<endl;
+     cout<<Vft;
+     cout<<endl;
+    */
 
     Df[2] = 0;
     FMatrix<float, 3, 3> tmp = Diagonal(Df);
@@ -162,10 +185,74 @@ FMatrix<float,3,3> computeF(vector<Match>& matches) {
 
     // Last step of Normalization
     F = transpose(N)*F*N;
+    float distance;
+    long double number_inliers=0, number_outliers=0;
+    float treshold = 0.1;
+   //  cout<<"T4"<<endl;
+    int pr = matches.size();
+    int training_size = min(pr, 100);
 
 
-
-
+    vector<int> Inliers;
+    for(int i=0;i<training_size;i++)
+    {
+        // SAMPSON DISTANCE
+        //  cout<<"i :"<<i<<endl;
+        // cout<<"T4.1"<<endl;
+        
+        v1[0] = matches.at(i).x1; v1[1] = matches.at(i).y1 ; v1[2] = 1;
+        v2[0] = matches.at(i).x2; v2[1] = matches.at(i).y2 ; v2[2] = 1;
+        // cout<<"T4.2"<<endl;
+        FVector<float, 3> tmp = transpose(F)*v1;
+        // cout<<"T4.3"<<endl;
+        
+        distance = abs( tmp[0]*v2[0]   +   tmp[1]*v2[1]  +    tmp[2] )   /   sqrt( pow(tmp[0], 2.0 )  +   pow( tmp[1], 2.0 )  );
+        // cout<<"T4.4"<<endl;
+        // cout<<"Distance = "<<distance<<endl;
+        if(distance<treshold)
+        {
+            // cout<<"T4.4.A1"<<endl;
+            Inliers.push_back(i);
+            // cout<<"T4.4.A2"<<endl;
+            number_inliers++;
+            // cout<<"T4.4.A3"<<endl;
+        }
+        else
+        {
+            // cout<<"T4.4.B1"<<endl;
+            number_outliers++;
+            // cout<<"T4.4.B2"<<endl;
+        }
+        // cout<<"T4.5"<<endl;
+    }
+    // cout<<"T5"<<endl;
+    
+    cout<<"Number of inliers = "<<number_inliers<<endl;
+    cout<<"Number of outliers = "<<number_outliers<<endl;
+    
+    if(number_inliers>best_performance)
+    {
+        best_performance = number_inliers;
+        long double a = number_inliers/(number_inliers+number_outliers);
+        long double b = pow((a), 8.0);
+        long double tmp = 1.0 - b;
+        long double c = log(tmp);
+       /*
+        cout<<"log(beta) = "<<log(beta)<<endl;
+        cout<<"number_inliers/(number_inliers+number_outliers) ="<<a<<endl;
+        cout<<"(num inliers/sum)^8 = "<<b<<endl;
+        cout<<"1-b = "<<tmp<<endl;
+        cout<<"log(1-pow((number_inliers/(number_inliers+number_outliers)), 8)) = "<<c<<endl;
+        */
+        niter = log(beta)/c;
+        FMatrix<float,3,3> bestF(F);
+        vector<int>  bestInliers(Inliers);
+    }
+    //cout<<"T6"<<endl;
+    
+    }
+    cout<<"BEST PERFORMANCE NUMBER INLIERS = "<<best_performance<<endl;
+    
     // Updating matches with inliers only
     vector<Match> all=matches;
     matches.clear();
