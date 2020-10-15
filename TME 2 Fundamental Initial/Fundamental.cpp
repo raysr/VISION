@@ -59,17 +59,31 @@ FMatrix<float,3,3> computeF(vector<Match>& matches) {
     // DO NOT FORGET NORMALIZATION OF POINTS
 
     // SVD
-    cout<<"MATCHES :"<<endl;
-    //int size = matches.size();
-
-    FMatrix<float 3, 3> N; // NORMALIZATION MATRIX
+   
+   // NORMALIZATION  
+    FMatrix<float, 3, 3> N; 
     N(0, 0) = 0.001; N(0, 1) = 0; N(0, 2) = 0;
     N(1, 0) = 0; N(1, 1) = 0.001; N(1, 2) = 0; 
     N(2, 0) = 0; N(2, 1) = 0; N(2, 2) = 1;
-
-
+    
     int size = 8;
     FMatrix<float, 8, 9> A;
+    FVector<float, 3> v1, v2;
+    for(int i=0; i<size; i++)
+    {
+        v1[0] = matches.at(i).x1; v1[1] = matches.at(i).y1 ; v1[2] = 1;
+        v2[0] = matches.at(i).x2; v2[1] = matches.at(i).y2 ; v2[2] = 1;
+        v1 = N*v1;
+        v2 = N*v2;
+
+        matches.at(i).x1 = v1[0];
+        matches.at(i).y1 = v1[1];
+        matches.at(i).x2 = v2[0];
+        matches.at(i).y2 = v2[1];
+    }
+
+
+
     for(int i=0; i<size; i++)
     {
         cout<<"0"<<endl;
@@ -142,20 +156,16 @@ FMatrix<float,3,3> computeF(vector<Match>& matches) {
     cout<<Vft;
     cout<<endl;
 
-    float min = 9999;
-    int argmin = -1;
-    for(int i=0; i<8; i++)
-    {
-        if(Df[i]<min)
-        {
-            min = Df[i];
-            argmin = i;
-        }
-    }
-    Df[argmin] = 0;
-    FMatrix<float> tmp = Uf*Df;
-    F = tmp*Vt;
-    cout<<"Passed 2."<<endl;
+    Df[2] = 0;
+    FMatrix<float, 3, 3> tmp = Diagonal(Df);
+    F = Uf*tmp*Vft;
+
+    // Last step of Normalization
+    F = transpose(N)*F*N;
+
+
+
+
     // Updating matches with inliers only
     vector<Match> all=matches;
     matches.clear();
