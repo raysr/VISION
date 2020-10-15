@@ -267,8 +267,21 @@ void displayEpipolar(Image<Color> I1, Image<Color> I2,
                      const FMatrix<float,3,3>& F) {
     while(true) {
         int x,y;
+        FVector<float, 3> v(3);
         if(getMouse(x,y) == 3)
-            break;
+        {            break;}
+        else
+        {
+            v[0] = x; v[1] = y ; v[2] = 1;
+        cout<<"Origin = "<<v<<endl;
+        // cout<<"T4.2"<<endl;
+        FVector<float, 3> tmp = transpose(F)*v;
+        cout<<"Result = "<<tmp<<endl;
+        int x2 = (int)round(tmp[0]); int y2 = (int)round(tmp[1]);
+        drawLine(x, y, x2, y2, RED);
+        }
+        
+
         // --------------- TODO ------------
     }
 }
@@ -294,11 +307,12 @@ int main(int argc, char* argv[])
 
     vector<Match> matches;
     algoSIFT(I1, I2, matches);
-    cout << " matches: " << matches.size() << endl;
+    cout << " matches initial size : " << matches.size() << endl;
     click();
     
     FMatrix<float,3,3> F = computeF(matches);
     cout << "F="<< endl << F;
+    cout << " new matches size : " << matches.size() << endl;
 
     // Redisplay with matches
     display(I1,0,0);
