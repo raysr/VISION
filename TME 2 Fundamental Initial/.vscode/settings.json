@@ -9,6 +9,7 @@
         "cmath": "cpp",
         "random": "cpp",
         "*.tcc": "cpp",
-        "string": "cpp"
+        "string": "cpp",
+        "ostream": "cpp"
     }
 }
