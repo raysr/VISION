@@ -98,21 +98,21 @@ static float correl(const Image<byte>& im1, int i1,int j1,float m1,
 
     float n1 = 0.0f, n2 = 0.0f, n = 0.0f;
     float den1 = 0.0f, den2 = 0.0f, den = 0.0f;
-
     float a = 0.0f, b = 0.0f;
     float c = 0.0f, d = 0.0f;
+
     for(int i=-win; i<win; i++)
     {
         for(int j=-win; j<win; j++)
         {
-            a = im1(i1+i, j1+j) - m1;
-            b = im2(i2+i, j2+j) - m2;
-
-            c += pow(im1(i1+i, j1+j) - m1, 2);
-            d += pow(im1(i1+i, j1+j) - m1, 2);
+            n1 = im1(i1+i, j1+j) - m1;
+            n2 = im2(i2+i, j2+j) - m2;
+            n += n1 * n2;
+            den1 += pow(im1(i1+i, j1+j) - m1, 2);
+            den2 += pow(im1(i1+i, j1+j) - m1, 2);
         }
     }
-    n = n1 * n2;
+    
     den = sqrt(den1 * den2);
     dist = n/den;
     return dist;
@@ -166,7 +166,7 @@ static void find_seeds(Image<byte> im1, Image<byte> im2,
         for(int x=win; x+win<im1.width(); x++)  // BOUCLE 2 IMAGE 1
         {
             float disparity = 0.0f;
-            float bestCorrelation = -5.0f;
+            float bestCorrelation = -99.0f;
             // ------------- TODO -------------
             // Hint: just ignore windows that are not fully in image
             
@@ -210,7 +210,7 @@ static void find_seeds(Image<byte> im1, Image<byte> im2,
 static void propagate(Image<byte> im1, Image<byte> im2,
                       Image<int>& disp, Image<bool>& seeds,
                       std::priority_queue<Seed>& Q) {
-    while(! Q.empty()) {
+while(! Q.empty()) {
         Seed s=Q.top();
         Q.pop();
         for(int i=0; i<4; i++) {
@@ -218,22 +218,7 @@ static void propagate(Image<byte> im1, Image<byte> im2,
             if(0<=x-win && 0<=y-win &&
                x+win<im2.width() && y+win<im2.height() &&
                ! seeds(x,y)) {
-	      float bestNCC = -5.0f;
-	      float bestDeltaD = -5;
-	      for(int deltaD = -1; deltaD <= 1; deltaD++){
-		if(s.d+deltaD < dMin || s.d+deltaD > dMax){
-		  continue;
-		} 
-		float currentNCC = ccorrel(im1,x,y,im2,x+s.d+deltaD,y);
-		if(currentNCC > bestNCC){
-		  bestNCC = currentNCC;
-		  bestDeltaD = s.d+deltaD;
-		}
-	      }
-	      Seed newSeed(x,y,bestDeltaD,bestNCC);
-	      Q.push(newSeed);
-	      seeds(x,y)=true;
-	      disp(x,y) = bestDeltaD;
+	      
             }
         }
     }
