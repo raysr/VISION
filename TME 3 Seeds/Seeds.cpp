@@ -109,11 +109,11 @@ static float correl(const Image<byte>& im1, int i1,int j1,float m1,
             n2 = im2(i2+i, j2+j) - m2;
             n += n1 * n2;
             den1 += pow(im1(i1+i, j1+j) - m1, 2);
-            den2 += pow(im1(i1+i, j1+j) - m1, 2);
+            den2 += pow(im2(i2+i, j2+j) - m2, 2);
         }
     }
     
-    den = sqrt(den1 * den2);
+    den = sqrt(den1 * den2 + EPS);
     dist = n/den;
     return dist;
 }
@@ -121,14 +121,13 @@ static float correl(const Image<byte>& im1, int i1,int j1,float m1,
 /// Sum of pixel values in patch centered on (i,j).
 static float sum(const Image<byte>& im, int i, int j)
 {
-    float s=0.0f;
+    float s = 0.0f;
     // ------------- TODO -------------
-    for(int x=-win; x<win; x++)
+    for(int x = i-win; x < i+win+1; x++)
     {
-
-        for(int y=-win; y<win; y++)
+        for(int y = j-win; y < j+win+1; y++)
         {
-            s += im[i+x, j+y];
+            s += (float)im(x, y);
         }
     }
 
@@ -152,7 +151,7 @@ static void find_seeds(Image<byte> im1, Image<byte> im2,
                        Image<int>& disp, // Disparity Map 
                        Image<bool>& seeds, // Seeds Map ( true where correlation > NccSeed )
                        std::priority_queue<Seed>& Q) 
-                       {
+    {
     disp.fill(dMin-1);
     seeds.fill(false);
     while(! Q.empty())
@@ -165,33 +164,36 @@ static void find_seeds(Image<byte> im1, Image<byte> im2,
             std::cout << "Seeds: " << 5*(y-win)/refreshStep <<"%\r"<<std::flush;
         for(int x=win; x+win<im1.width(); x++)  // BOUCLE 2 IMAGE 1
         {
-            float disparity = 0.0f;
-            float bestCorrelation = -99.0f;
+            
             // ------------- TODO -------------
             // Hint: just ignore windows that are not fully in image
-            
-            for(int xim2=x+dMin; xim2<x+dMax; xim2++) // BOUCLE 1 IMAGE 2
+            if( x+dMin<0 || x+dMax > im2.width() ) { continue;}
+            float disparity = 0.0f;
+            float bestCorrelation = -10.0f;
+
+            for(int xim2 = dMin; xim2 <= dMax + 1; xim2++) 
             {
-                if(xim2 > win)
-                {
-                    float correlation = ccorrel(im1, x, y, im2, xim2, y);
-                    if(correlation>bestCorrelation)
+                if( x + xim2 < win ) { continue; }
+                    
+                    float correlation = ccorrel(im1, x, y, im2, x+xim2, y);
+                    if( correlation > bestCorrelation )
                     {
-                            disparity = xim2-x;
-                            if(disparity<dMin)
+                            disparity = xim2;
+                            if( disparity < dMin)
                             {
                                 disparity = dMin;
                             }
-                            if(disparity>dMax)
+                            if( disparity > dMax)
                             {
                                 disparity = dMax;
                             }    
                         bestCorrelation = correlation;
                     }
-                }
+                    
+                
             }
 
-            if(bestCorrelation>nccSeed)
+            if( bestCorrelation > nccSeed )
             {
                 disp(x, y) = disparity;
                 seeds(x, y) = true;
@@ -206,22 +208,58 @@ static void find_seeds(Image<byte> im1, Image<byte> im2,
     std::cout << std::endl;
 }
 
+
 /// Propagate seeds
 static void propagate(Image<byte> im1, Image<byte> im2,
                       Image<int>& disp, Image<bool>& seeds,
-                      std::priority_queue<Seed>& Q) {
-while(! Q.empty()) {
+                      std::priority_queue<Seed>& Q) 
+{
+while(! Q.empty()) 
+{
         Seed s=Q.top();
         Q.pop();
-        for(int i=0; i<4; i++) {
-            float x=s.x+dx[i], y=s.y+dy[i];
-            if(0<=x-win && 0<=y-win &&
-               x+win<im2.width() && y+win<im2.height() &&
-               ! seeds(x,y)) {
-	      
+        for(int i = 0; i < 4; i++)  
+        {
+            float x =s.x+dx[i], y=s.y+dy[i];
+            int disparity = s.d;
+            float bestCorrelation = -10;
+            if(0<=x-win && 0<=y-win && x+win<im2.width() && y+win<im2.height() && ! seeds(x,y)) 
+            {
+                // ------------- TODO -------------
+                int bestDisparity;
+                int shift = s.d;
+                int dmin = -1;
+                int dmax = 1;
+                float correlation;
+                for (int dx = dmin;dx<=dmax+1; dx++)
+                {
+                    if(x+dx +shift>win )
+                    {
+                        correlation = ccorrel(im1, x, y, im2, x+dx+shift, y);
+                        if(correlation > bestCorrelation)
+                        {
+                            bestCorrelation = correlation;
+                            bestDisparity = dx+shift;
+                        }
+                    }
+                }
+
+                if(bestDisparity>dMax)
+                {
+                    bestDisparity = dMax;
+                }
+                if(bestDisparity<dMin)
+                {
+                    bestDisparity = dMin;
+                }
+
+                seeds(x, y) = true;
+                disp(x, y) = bestDisparity;
+                Q.push(Seed(x, y, bestDisparity, bestCorrelation));
+
             }
         }
-    }
+}
 }
 
 int main()

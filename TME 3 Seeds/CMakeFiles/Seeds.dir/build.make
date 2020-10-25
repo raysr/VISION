@@ -79,12 +79,12 @@ Seeds_EXTERNAL_OBJECTS =
 
 Seeds: CMakeFiles/Seeds.dir/Seeds.cpp.o
 Seeds: CMakeFiles/Seeds.dir/build.make
-Seeds: /usr/lib/x86_64-linux-gnu/libQt5OpenGL.so.5.12.8
+Seeds: /usr/lib/x86_64-linux-gnu/libQt5OpenGL.so.5.14.2
 Seeds: /usr/lib/x86_64-linux-gnu/libGL.so
 Seeds: /usr/lib/x86_64-linux-gnu/libGLU.so
-Seeds: /usr/lib/x86_64-linux-gnu/libQt5Widgets.so.5.12.8
-Seeds: /usr/lib/x86_64-linux-gnu/libQt5Gui.so.5.12.8
-Seeds: /usr/lib/x86_64-linux-gnu/libQt5Core.so.5.12.8
+Seeds: /usr/lib/x86_64-linux-gnu/libQt5Widgets.so.5.14.2
+Seeds: /usr/lib/x86_64-linux-gnu/libQt5Gui.so.5.14.2
+Seeds: /usr/lib/x86_64-linux-gnu/libQt5Core.so.5.14.2
 Seeds: CMakeFiles/Seeds.dir/link.txt
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --bold --progress-dir="/home/ray/Documents/Sorbonne Universite/VISION/TME 3 Seeds/CMakeFiles" --progress-num=$(CMAKE_PROGRESS_2) "Linking CXX executable Seeds"
 	$(CMAKE_COMMAND) -E cmake_link_script CMakeFiles/Seeds.dir/link.txt --verbose=$(VERBOSE)
