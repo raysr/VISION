@@ -2,6 +2,7 @@
 // Project:  Seeds
 // Author:   Pascal Monasse
 
+
 #include <Imagine/Graphics.h>
 #include <Imagine/Images.h>
 #include <queue>
@@ -176,7 +177,7 @@ static void find_seeds(Image<byte> im1, Image<byte> im2,
                 if( x + xim2 < win ) { continue; }
                     
                     float correlation = ccorrel(im1, x, y, im2, x+xim2, y);
-                    if( correlation > bestCorrelation )
+                    if( correlation > bestCorrelation ) // Replace only with best correlation
                     {
                             disparity = xim2;
                             if( disparity < dMin)
@@ -223,23 +224,23 @@ while(! Q.empty())
             float x =s.x+dx[i], y=s.y+dy[i];
             int disparity = s.d;
             float bestCorrelation = -10;
-            if(0<=x-win && 0<=y-win && x+win<im2.width() && y+win<im2.height() && ! seeds(x,y)) 
+            if( 0<=x-win && 0<=y-win && x+win<im2.width() && y+win<im2.height() && ! seeds(x,y) ) 
             {
                 // ------------- TODO -------------
                 int bestDisparity;
-                int shift = s.d;
-                int dmin = -1;
-                int dmax = 1;
+                int dis = s.d;
+                int deb = -1;
+                int fin = 1;
                 float correlation;
-                for (int dx = dmin;dx<=dmax+1; dx++)
+                for (int v = deb; v<=fin+1; v++)
                 {
-                    if(x+dx +shift>win )
+                    if( x+v+dis>win )
                     {
-                        correlation = ccorrel(im1, x, y, im2, x+dx+shift, y);
-                        if(correlation > bestCorrelation)
+                        correlation = ccorrel(im1, x, y, im2, x+v+dis, y);
+                        if(correlation > bestCorrelation) // Replace only with best correlation
                         {
                             bestCorrelation = correlation;
-                            bestDisparity = dx+shift;
+                            bestDisparity = v+dis;
                         }
                     }
                 }
@@ -284,17 +285,22 @@ int main()
     std::priority_queue<Seed> Q;
 
     // Dense disparity
+    cout<<"Processing dense disparity..."<<endl;
     find_seeds(I1, I2, -1.0f, disp, seeds, Q);
     displayDisp(disp,W,2);
 
     // Only seeds
+    cout<<"Finding Seeds..."<<endl;
     find_seeds(I1, I2, nccSeed, disp, seeds, Q);
     displayDisp(disp,W,3);
 
     // Propagation of seeds
+    cout<<"Seeds propagation..."<<endl;
     propagate(I1, I2, disp, seeds, Q);
     displayDisp(disp,W,4);
 
+    cout<<"Done !"<<endl;
+    cout<<"Shift + Click on 3D Model to rotate. ( click to END )"<<endl;
     // Show 3D (use shift click to animate)
     show3D(I1,disp);
 
