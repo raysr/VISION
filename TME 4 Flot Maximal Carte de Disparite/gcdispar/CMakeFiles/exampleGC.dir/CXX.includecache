@@ -1,0 +1,52 @@
+#IncludeRegexLine: ^[ 	]*[#%][ 	]*(include|import)[ 	]*[<"]([^">]+)([">])
+
+#IncludeRegexScan: ^.*$
+
+#IncludeRegexComplain: ^$
+
+#IncludeRegexTransform: 
+
+/home/ray/Documents/Sorbonne Universite/VISION/TME 4 Flot Maximal Carte de Disparite/gcdispar/exampleGC.cpp
+iostream
+-
+maxflow/graph.h
+/home/ray/Documents/Sorbonne Universite/VISION/TME 4 Flot Maximal Carte de Disparite/gcdispar/maxflow/graph.h
+
+/home/ray/Documents/Sorbonne Universite/VISION/TME 4 Flot Maximal Carte de Disparite/gcdispar/maxflow/block.h
+block.h
+/home/ray/Documents/Sorbonne Universite/VISION/TME 4 Flot Maximal Carte de Disparite/gcdispar/maxflow/block.h
+stdlib.h
+-
+
+/home/ray/Documents/Sorbonne Universite/VISION/TME 4 Flot Maximal Carte de Disparite/gcdispar/maxflow/graph.cpp
+stdio.h
+-
+stdlib.h
+-
+string.h
+-
+graph.h
+/home/ray/Documents/Sorbonne Universite/VISION/TME 4 Flot Maximal Carte de Disparite/gcdispar/maxflow/graph.h
+maxflow.inc
+/home/ray/Documents/Sorbonne Universite/VISION/TME 4 Flot Maximal Carte de Disparite/gcdispar/maxflow/maxflow.inc
+instances.inc
+/home/ray/Documents/Sorbonne Universite/VISION/TME 4 Flot Maximal Carte de Disparite/gcdispar/maxflow/instances.inc
+
+/home/ray/Documents/Sorbonne Universite/VISION/TME 4 Flot Maximal Carte de Disparite/gcdispar/maxflow/graph.h
+string.h
+-
+block.h
+/home/ray/Documents/Sorbonne Universite/VISION/TME 4 Flot Maximal Carte de Disparite/gcdispar/maxflow/block.h
+assert.h
+-
+
+/home/ray/Documents/Sorbonne Universite/VISION/TME 4 Flot Maximal Carte de Disparite/gcdispar/maxflow/instances.inc
+graph.h
+/home/ray/Documents/Sorbonne Universite/VISION/TME 4 Flot Maximal Carte de Disparite/gcdispar/maxflow/graph.h
+
+/home/ray/Documents/Sorbonne Universite/VISION/TME 4 Flot Maximal Carte de Disparite/gcdispar/maxflow/maxflow.inc
+stdio.h
+-
+graph.h
+/home/ray/Documents/Sorbonne Universite/VISION/TME 4 Flot Maximal Carte de Disparite/gcdispar/maxflow/graph.h
+
