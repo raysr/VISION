@@ -5,7 +5,7 @@
 #include <Imagine/Images.h>
 #include <iostream>
 #include <algorithm>
-
+#include <map>
 #include "maxflow/graph.h"
 
 using namespace std;
@@ -49,9 +49,21 @@ double correl(const doubleImage& I1,  // Image 1
     // Initialize correlation
     double c = 0;
     // For each pixel displacement in patch
-    for (int x=-n; x<=n; x++) 
-        for(int y=-n; y<=n; y++)
-            c += (I1(u1+x,v1+y) - I1M(u1,v1)) * (I2(u2+x,v2+y) - I2M(u2,v2));
+    for (int x=-n; x<=n; x++) {
+        for(int y=-n; y<=n; y++){
+            if(u1+x<I1.width() && u1+x>=0 && 
+                v1+y<I1.height()  && v1+y>=0 &&  
+                u2+x<I2.width() && u2+x>=0 && 
+                v2+y<I2.height()  && v2+y>=0 && 
+                u1<I1.width() && u1>=0 && 
+                u2<I2.width() && u2>=0 && 
+                v1<I1.height() && v1>=0 && 
+                v2<I2.height() && v2>=0  )
+            {
+               // cout<<"cc1"<<endl;
+                c += (I1(u1+x,v1+y) - I1M(u1,v1)) * (I2(u2+x,v2+y) - I2M(u2,v2));
+               // cout<<"cc2"<<endl;
+        }}}
     return c / ((2*n+1)*(2*n+1));
 }
 
@@ -73,23 +85,10 @@ double zncc(const doubleImage& I1,  // Image 1
 }
 
 
-double mean_over_patch(const doubleImage1 I1, int x, int y, int n)
-{
-    double mean = 0;
-    for(int i=x-n; i<x+n+1; i++)
-    {
-        for(int j=y-n; j<y+n+1; j++)
-        {
-            mean += I1(i, j);
-        }
-    }
-    return mean/pow((2*n+1), 2);
-}
-
 double p(double& v)
 {
     if(v<0){return 1;}
-    return sqrt(1-c);
+    return sqrt(1-v);
 }
 // Load two rectified images.
 // Compute the disparity of image 2 w.r.t. image 1.
@@ -150,24 +149,117 @@ int main() {
     /////------------------------------------------------------------
     /////  BEGIN CODE TO COMPLETE: define appropriate graph G
     /////
+
+    Graph<int,int,int> G(nd*nx*ny,0);
+    double pzncc = 0, pzncc_last =0;
+    double ezncc=0, ezncc_last=0;
+    int count = 1;
+
+
+    int ***nodes = new int**[nd+1];
+    for(int i =0; i<nd+1; i++)
+    {
+        nodes[i] = new int*[w1+1];
+        for(int j =0; j<w1+1; j++)
+        {
+            nodes[i][j] = new int[h+1];
+            for(int k = 0; k<h+1;k++)
+            {
+                nodes[i][j][k] = 0;
+            }
+        }
+    }
+    int dminv = -1*dmin;
+    
+    // int nodes[nd][w1][h];
+    cout<<" Constructing graph..."<<endl;
     for(int x=0;x<w1;x++)
+    {
+        //cout<<"it : ("<<x<<"/"<<w1<<")"<<endl;
+        for(int y=0;y<h;y++)
+        {
+            for(int d=dmin; d<dmax+1; d++)
+            {
+          //      cout<<"d = "<<d<<endl;
+                if(d==dmin)  // FIRST LAYER
+                {
+                    //cout<<"1"<<endl;
+                    nodes[dminv+d][x][y] = G.add_node(1);
+                   // cout<<"THis : "<< nodes[dminv+d][x][y]<<endl;
+                    //cout<<"2"<<endl;
+                    ezncc  = zncc(I1, I1M, I2, I2M, x, y, x+d, y, n);
+                    //cout<<"3"<<endl;
+                    pzncc = wcc*p(ezncc);
+                    //cout<<"4"<<endl;
+                    G.add_tweights(nodes[dminv+d][x][y], pzncc, 0);
+                    //cout<<"5"<<endl;
+                }
+                else if(d!=dmax)  // MID LAYERS
+                {
+                    //cout<<"6"<<endl;
+                   //cout<<"non"<<endl;
+                   //cout<<"7"<<endl;
+                    ezncc  = zncc(I1, I1M, I2, I2M, x, y, x+d, y, n);
+                    //cout<<"8"<<endl;
+                    pzncc =wcc* p(ezncc);
+                    //cout<<"9"<<endl;
+                    nodes[dminv+d][x][y] = G.add_node(1); 
+                    //cout<<"10"<<endl;
+                    G.add_edge(nodes[dminv+d-1][x][y], nodes[dminv+d][x][y], pzncc, 0);
+                    //cout<<"11"<<endl;
+                }
+                else  // LAST LAYER
+                {
+                    //cout<<"12"<<endl;
+                    nodes[dminv+d][x][y] = G.add_node(1); 
+                   // cout<<"13"<<endl;
+                    ezncc  = zncc(I1, I1M, I2, I2M, x, y, x+d, y, n);
+                   // cout<<"14"<<endl;
+                    pzncc = wcc*p(ezncc);
+                   // cout<<"15"<<endl;
+                   //G.add_edge(nodes[dminv+d-1][x][y], nodes[dminv+d][x][y], pzncc, 0);
+                   //cout<<"First :"<<nodes[dminv+d-1][x][y]<<endl;
+                   //cout<<"Second :"<<nodes[dminv+d][x][y]<<endl;
+                   G.add_edge(nodes[dminv+d-1][x][y], nodes[dminv+d][x][y], pzncc, 0);
+                   //G.add_edge(29, 30, 28, 0);
+                    //cout<<"16"<<endl;
+                    ezncc_last  = zncc(I1, I1M, I2, I2M, x, y, x+d+1, y, n);
+                    //cout<<"17"<<endl;
+                    pzncc_last = wcc*p(ezncc_last);
+                    //cout<<"18"<<endl;
+                    G.add_tweights(nodes[dminv+d][x][y], 0, pzncc_last);
+                    //cout<<"19"<<endl;
+                }
+                count++;
+            }
+        }
+    }
+
+    cout<<"Adding regularization"<<endl;
+    double v = 0;
+    for(int x=0;x<w1;x++) // ADDING NEIGHBORS REGULARIZATION
     {
         for(int y=0;y<h;y++)
         {
-
-            for(int d=dmin; d<dmax; d++)
+            for(int d=dmin; d<dmax+1; d++)
             {
+                v = lambda;
 
-                double D = 
+                if(x-1>=0) G.add_edge(nodes[dminv+d][x-1][y], nodes[dminv+d][x][y], v, v);
+                if(x+1<=w1) G.add_edge(nodes[dminv+d][x+1][y], nodes[dminv+d][x][y], v, v);
+                if(y-1>=0) G.add_edge(nodes[dminv+d][x][y-1], nodes[dminv+d][x][y], v, v);
+                if(y+1<=h) G.add_edge(nodes[dminv+d][x][y+1], nodes[dminv+d][x][y], v, v);
             }
         }
-
-
     }
-    /* WARNING: dummy code to replace */ Graph<int,int,int> G(nd*nx*ny,0);
-    /* WARNING: dummy code to replace */ cout<<endl<<"***\n*** Dummy computation: code has to be completed!\n***"<<endl;
+
+    /* WARNING: dummy code to replace */ 
     /////  END CODE TO BE COMPLETED
     /////------------------------------------------------------------
+  
+  
+
+  
     cout << "done" << endl;
 
     cout << "Computing minimum cut... " << flush;
@@ -175,15 +267,34 @@ int main() {
     cout << "done" << endl << "  max flow = " << f << endl;
 
     cout << "Extracting disparity map from minimum cut... " << flush;
-    doubleImage D(nx,ny);
+    //doubleImage D(nx,ny);
+    doubleImage D(w1, h);
+    
     // For each pixel
-    for (int i=0;i<nx;i++) {
-        for (int j=0;j<ny;j++) {
+    for (int i=0;i<w1;i++) 
+    {
+        for (int j=0;j<h;j++) 
+        {
+            int d = dmin;
+            /*
+            cout<<"i = "<<i<<endl;
+            cout<<"j = "<<j<<endl;
+            cout<<"dminv = "<<dminv<<endl;
+            cout<<"d = "<<d<<endl;
+            cout<<"1"<<endl;
+            */
+            while(G.what_segment(nodes[dminv+d][i][j]) == Graph<int,int,int>::SOURCE)
+            {
+                d += 1;
+            }
+           // cout<<"2"<<endl;
+            D(i, j) = d;
+           // cout<<"3"<<endl;
             ///// Extract disparity from minimum cut
             /////------------------------------------------------------------
             /////  BEGIN CODE TO BE COMPLETED: define disparity map D from graph G and minimum cut
             /////
-            /* WARNING: dummy code to replace */ D(i,j) = 40+2*I1(n+i*zoom,n+j*zoom)/(1+(i>j));
+            /* WARNING: dummy code to replace */ // D(i,j) = 40+2*I1(n+i*zoom,n+j*zoom)/(1+(i>j));
             /* WARNING: dummy code to replace */ if (i+j==0) cout<<endl<<"***\n*** Dummy computation: code has to be completed!\n***   (3D generated by default does not make sense)\n***"<<endl;
             /////  END CODE TO BE COMPLETED
             /////------------------------------------------------------------

@@ -23,6 +23,7 @@ void testGCuts() {
     g.add_tweights( 0,   /* capacities */  1, 5 );
     g.add_tweights( 1,   /* capacities */  6, 1 );
     g.add_edge( 0, 1,    /* capacities */  4, 3 );
+    
     int flow = g.maxflow();
     cout << "Flow = " << flow << endl;
     for (int i=0;i<2;i++)
