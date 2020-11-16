@@ -156,8 +156,8 @@ int main() {
     int count = 1;
 
 
-    int ***nodes = new int**[nd+1];
-    for(int i =0; i<nd+1; i++)
+    int ***nodes = new int**[dmax+1];
+    for(int i =0; i<dmax+1; i++)
     {
         nodes[i] = new int*[w1+1];
         for(int j =0; j<w1+1; j++)
@@ -169,7 +169,7 @@ int main() {
             }
         }
     }
-    int dminv = -1*dmin;
+
     //G.add_node(nx*ny*nd);
     // int nodes[nd][w1][h];
     cout<<" Constructing graph..."<<endl;
@@ -184,14 +184,14 @@ int main() {
                 if(d==dmin)  // FIRST LAYER
                 {
                     //cout<<"1"<<endl;
-                    nodes[dminv+d][x][y] = G.add_node(1);
+                    nodes[d][x][y] = G.add_node(1);
                    // cout<<"THis : "<< nodes[dminv+d][x][y]<<endl;
                     //cout<<"2"<<endl;
                     ezncc  = zncc(I1, I1M, I2, I2M, n+zoom*x, n+zoom*y, n+zoom*x+d, n+zoom*y, n);
                     //cout<<"3"<<endl;
                     pzncc = wcc*p(ezncc);
                     //cout<<"4"<<endl;
-                    G.add_tweights(nodes[dminv+d][x][y], pzncc, 0);
+                    G.add_tweights(nodes[d][x][y], pzncc, 0);
                     //cout<<"5"<<endl;
                 }
                 else if(d!=dmax)  // MID LAYERS
@@ -203,15 +203,15 @@ int main() {
                     //cout<<"8"<<endl;
                     pzncc =wcc* p(ezncc);
                     //cout<<"9"<<endl;
-                    nodes[dminv+d][x][y] = G.add_node(1); 
+                    nodes[d][x][y] = G.add_node(1); 
                     //cout<<"10"<<endl;
-                    G.add_edge(nodes[dminv+d-1][x][y], nodes[dminv+d][x][y], pzncc, 0);
+                    G.add_edge(nodes[d-1][x][y], nodes[d][x][y], pzncc, 0);
                     //cout<<"11"<<endl;
                 }
                 else  // LAST LAYER
                 {
                     //cout<<"12"<<endl;
-                    nodes[dminv+d][x][y] = G.add_node(1); 
+                    nodes[d][x][y] = G.add_node(1); 
                    // cout<<"13"<<endl;
                     ezncc  = zncc(I1, I1M, I2, I2M, n+zoom*x, n+zoom*y, n+zoom*x+d, n+zoom*y, n);
                    // cout<<"14"<<endl;
@@ -220,14 +220,14 @@ int main() {
                    //G.add_edge(nodes[dminv+d-1][x][y], nodes[dminv+d][x][y], pzncc, 0);
                    //cout<<"First :"<<nodes[dminv+d-1][x][y]<<endl;
                    //cout<<"Second :"<<nodes[dminv+d][x][y]<<endl;
-                   G.add_edge(nodes[dminv+d-1][x][y], nodes[dminv+d][x][y], pzncc, 0);
+                   G.add_edge(nodes[d-1][x][y], nodes[d][x][y], pzncc, 0);
                    //G.add_edge(29, 30, 28, 0);
                     //cout<<"16"<<endl;
                     ezncc_last  = zncc(I1, I1M, I2, I2M, n+zoom*x, n+zoom*y, n+zoom*x+d+1, n+zoom*y, n);
                     //cout<<"17"<<endl;
                     pzncc_last = wcc*p(ezncc_last);
                     //cout<<"18"<<endl;
-                    G.add_tweights(nodes[dminv+d][x][y], 0, pzncc_last);
+                    G.add_tweights(nodes[d][x][y], 0, pzncc_last);
                     //cout<<"19"<<endl;
                 }
                 count++;
@@ -245,10 +245,10 @@ int main() {
             {
                 v = lambda;
 
-                if(x-1>=0) G.add_edge(nodes[dminv+d][x-1][y], nodes[dminv+d][x][y], v, v);
-                if(x+1<=w1) G.add_edge(nodes[dminv+d][x+1][y], nodes[dminv+d][x][y], v, v);
-                if(y-1>=0) G.add_edge(nodes[dminv+d][x][y-1], nodes[dminv+d][x][y], v, v);
-                if(y+1<=h) G.add_edge(nodes[dminv+d][x][y+1], nodes[dminv+d][x][y], v, v);
+                if(x-1>=0) G.add_edge(nodes[d][x-1][y], nodes[d][x][y], v, v);
+                if(x+1<=w1) G.add_edge(nodes[d][x+1][y], nodes[d][x][y], v, v);
+                if(y-1>=0) G.add_edge(nodes[d][x][y-1], nodes[d][x][y], v, v);
+                if(y+1<=h) G.add_edge(nodes[d][x][y+1], nodes[d][x][y], v, v);
             }
         }
     }
@@ -277,7 +277,7 @@ int main() {
         {
             int d = dmin;
 
-            while(G.what_segment(nodes[dminv+d][i][j]) == Graph<int,int,int>::SOURCE)
+            while(G.what_segment(nodes[d][i][j]) == Graph<int,int,int>::SOURCE)
             {
                 d += 1;
                 D(i, j) = d;
