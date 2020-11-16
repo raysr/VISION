@@ -14,6 +14,11 @@ using namespace Imagine;
 typedef Image<byte> byteImage;
 typedef Image<double> doubleImage;
 
+
+static const int dx[]={+1,  0};
+static const int dy[]={ 0, +1};
+
+
 // Return image of mean intensity value over (2n+1)x(2n+1) patch
 doubleImage meanImage(const doubleImage& I, int n) {
     // Create image for mean values
@@ -139,6 +144,7 @@ int main() {
     const int nx = (w1 - 2*n) / zoom, ny = (h - 2*n) / zoom;
     const int nd = dmax-dmin; // Disparity range
     const int INF=1000000; // "Infinite" value for edge impossible to cut
+    
     // Create graph
     // The graph library works with node numbers. To clarify the setting, create
     // a formula to associate a unique node number to a triplet (x,y,d) of pixel
@@ -146,115 +152,71 @@ int main() {
     // The library assumes an edge consists of a pair of oriented edges, one in
     // each direction. Put correct weights to the edges, such as 0, INF, or a
     // an intermediate weight.
-    /////------------------------------------------------------------
-    /////  BEGIN CODE TO COMPLETE: define appropriate graph G
-    /////
 
-    Graph<int,int,int> G(nd*nx*ny,0);
-    double pzncc = 0, pzncc_last =0;
+
+
+
+    //==================== Structure de translation des coordonnées de noeuds ==================
+   
+    auto nodes = [nd, nx, ny](int d, int x, int y)
+    {
+        return d + nd * (x + nx * y);
+    };
+
+
+    //==================== Variables pour stocker les futurs calculs de poids d'arcs ===============
+    double pzncc = 0, pzncc_last =0; 
     double ezncc=0, ezncc_last=0;
-    int count = 1;
 
+   
+    int neighbor_x, neighbor_y;
+     
 
-    int ***nodes = new int**[dmax+1];
-    for(int i =0; i<dmax+1; i++)
-    {
-        nodes[i] = new int*[w1+1];
-        for(int j =0; j<w1+1; j++)
-        {
-            nodes[i][j] = new int[h+1];
-            for(int k = 0; k<h+1;k++)
-            {
-                nodes[i][j][k] = 0;
-            }
-        }
-    }
+     int K = 1 + nd * 4 * lambda; //=========================== Terme pour minimiser le nombre de coupures
 
-    //G.add_node(nx*ny*nd);
-    // int nodes[nd][w1][h];
+     //=================== Initialiser le Graphe et créer le nombre de noeuds nécessaires ( qui  ne sont pas connectés pour le moment ) ================
+    Graph<int,int,int> G(nd*nx*ny, nx*ny*(3*nd-1)-nd*(nx+ny));
+    G.add_node(nx * ny * nd);
+
     cout<<" Constructing graph..."<<endl;
-    for(int x=0;x<w1;x++)
+    for(int x=0;x<nx;x++)  //====================  BOUCLE SUR LA LARGEUR ====================
     {
-        //cout<<"it : ("<<x<<"/"<<w1<<")"<<endl;
-        for(int y=0;y<h;y++)
+        for(int y=0;y<ny;y++) //====================  BOUCLE SUR LA HAUTEUR ====================
         {
-            for(int d=dmin; d<dmax+1; d++)
+            for(int d=0; d<nd; d++) //====================  BOUCLE SUR LES DISPARITES (on commence par 0 jusqu'à (dmax-dmin) pour matcher l'indexation du graphe on réincrémentera aprés de dmin)====================
             {
-          //      cout<<"d = "<<d<<endl;
-                if(d==dmin)  // FIRST LAYER
+
+                double ezncc  = zncc(I1, I1M, I2, I2M, n+zoom*x, n+zoom*y, n+zoom*x+d+dmin, n+zoom*y, n);
+                double pzncc = K+wcc*p(ezncc);
+                if(d==(nd-1))   //================= Si on se situe à la dernière couche on doit connecter au PUIT avec le poids pzncc
                 {
-                    //cout<<"1"<<endl;
-                    nodes[d][x][y] = G.add_node(1);
-                   // cout<<"THis : "<< nodes[dminv+d][x][y]<<endl;
-                    //cout<<"2"<<endl;
-                    ezncc  = zncc(I1, I1M, I2, I2M, n+zoom*x, n+zoom*y, n+zoom*x+d, n+zoom*y, n);
-                    //cout<<"3"<<endl;
-                    pzncc = wcc*p(ezncc);
-                    //cout<<"4"<<endl;
-                    G.add_tweights(nodes[d][x][y], pzncc, 0);
-                    //cout<<"5"<<endl;
+                    G.add_tweights(nodes(d, x, y), 0, pzncc);
                 }
-                else if(d!=dmax)  // MID LAYERS
+                
+                if(d==0) //================= Si on se situe à la première couche on doit connecter à la SOURCE avec le poids pzncc
                 {
-                    //cout<<"6"<<endl;
-                   //cout<<"non"<<endl;
-                   //cout<<"7"<<endl;
-                    ezncc  = zncc(I1, I1M, I2, I2M, n+zoom*x, n+zoom*y, n+zoom*x+d, n+zoom*y, n);
-                    //cout<<"8"<<endl;
-                    pzncc =wcc* p(ezncc);
-                    //cout<<"9"<<endl;
-                    nodes[d][x][y] = G.add_node(1); 
-                    //cout<<"10"<<endl;
-                    G.add_edge(nodes[d-1][x][y], nodes[d][x][y], pzncc, 0);
-                    //cout<<"11"<<endl;
+                    G.add_tweights(nodes(d, x, y), pzncc, 0);
+
                 }
-                else  // LAST LAYER
+                else //===================== Si on est dans un noeud intermédiaire on doit se connecter au noeud précéde avec pzncc
+                {  
+                     G.add_edge(nodes(d-1, x, y), nodes(d, x, y), pzncc, 0);
+                }
+
+
+                for(int nei=0; nei<(sizeof(dx)/sizeof(*dx)); nei++) //=============== On effectue les connexions de chaque pixel dans le graphe avec ses 4 voisins avec le poids LAMBDA
                 {
-                    //cout<<"12"<<endl;
-                    nodes[d][x][y] = G.add_node(1); 
-                   // cout<<"13"<<endl;
-                    ezncc  = zncc(I1, I1M, I2, I2M, n+zoom*x, n+zoom*y, n+zoom*x+d, n+zoom*y, n);
-                   // cout<<"14"<<endl;
-                    pzncc = wcc*p(ezncc);
-                   // cout<<"15"<<endl;
-                   //G.add_edge(nodes[dminv+d-1][x][y], nodes[dminv+d][x][y], pzncc, 0);
-                   //cout<<"First :"<<nodes[dminv+d-1][x][y]<<endl;
-                   //cout<<"Second :"<<nodes[dminv+d][x][y]<<endl;
-                   G.add_edge(nodes[d-1][x][y], nodes[d][x][y], pzncc, 0);
-                   //G.add_edge(29, 30, 28, 0);
-                    //cout<<"16"<<endl;
-                    ezncc_last  = zncc(I1, I1M, I2, I2M, n+zoom*x, n+zoom*y, n+zoom*x+d+1, n+zoom*y, n);
-                    //cout<<"17"<<endl;
-                    pzncc_last = wcc*p(ezncc_last);
-                    //cout<<"18"<<endl;
-                    G.add_tweights(nodes[d][x][y], 0, pzncc_last);
-                    //cout<<"19"<<endl;
+
+                    neighbor_x = x+dx[nei]; neighbor_y = y+dy[nei];
+                    if((neighbor_x<nx) && (neighbor_y<ny))
+                    {
+                        G.add_edge(nodes(d, x, y), nodes(d, neighbor_x, neighbor_y), lambda, lambda);
+                    }
                 }
-                count++;
             }
         }
     }
 
-    cout<<"Adding regularization"<<endl;
-    double v = 0;
-    for(int x=0;x<w1;x++) // ADDING NEIGHBORS REGULARIZATION
-    {
-        for(int y=0;y<h;y++)
-        {
-            for(int d=dmin; d<dmax+1; d++)
-            {
-                v = lambda;
-
-                if(x-1>=0) G.add_edge(nodes[d][x-1][y], nodes[d][x][y], v, v);
-                if(x+1<=w1) G.add_edge(nodes[d][x+1][y], nodes[d][x][y], v, v);
-                if(y-1>=0) G.add_edge(nodes[d][x][y-1], nodes[d][x][y], v, v);
-                if(y+1<=h) G.add_edge(nodes[d][x][y+1], nodes[d][x][y], v, v);
-            }
-        }
-    }
-
-    /* WARNING: dummy code to replace */ 
-    /////  END CODE TO BE COMPLETED
     /////------------------------------------------------------------
   
   
@@ -267,21 +229,19 @@ int main() {
     cout << "done" << endl << "  max flow = " << f << endl;
 
     cout << "Extracting disparity map from minimum cut... " << flush;
-    //doubleImage D(nx,ny);
-    doubleImage D(w1, h);
-    
-    // For each pixel
-    for (int i=0;i<w1;i++) 
-    {
-        for (int j=0;j<h;j++) 
-        {
-            int d = dmin;
+    doubleImage D(nx,ny);
 
-            while(G.what_segment(nodes[d][i][j]) == Graph<int,int,int>::SOURCE)
+    
+    for (int i=0; i<nx; i++) 
+    {
+        for (int j=0; j<ny; j++) 
+        {
+            int d = 0;
+            while((G.what_segment(nodes(d, i, j)) == Graph<int,int,int>::SOURCE) && (d<nd)) //===================== Tant qu'on est du coté de la source dans le coupe on incrémente
             {
                 d += 1;
-                D(i, j) = d;
             }
+                D(i, j) = dmin+d; //=================  On affecte  le d + dmin ( qui n'était pas pris en compte précédemment vu qu'on bouclait en commençant par 0 )
         }
     }
     cout << "done" << endl;
